@@ -1,8 +1,12 @@
-# Axon iOS 16
+# Axon iOS 16 Compatibility Fork
 
-Axon is a Theos tweak that brings Priority Hub-style grouped notifications to jailbroken iOS 16 devices. It reorganizes Lock Screen and Notification Center notifications by application, adds icon-based filtering, and exposes preference controls for layout, style, badges, haptics, sorting, and display behavior.
+Axon is a Theos-based iOS tweak that provides Priority Hub-style grouped notifications for jailbroken iOS 16 devices. It reorganizes Lock Screen and Notification Center notifications by application, adds icon-based filtering, and exposes preference controls for layout, style, badges, haptics, sorting, and display behavior.
 
-This fork targets a roothide-style package build and keeps the tweak logic and preference bundle together in one Theos project.
+This archived compatibility fork targets a roothide-style package build and keeps the tweak logic and preference bundle together in one Theos project.
+
+## Scope and Attribution
+
+The original Axon package is credited to Nepeta and Baw Appie in the preserved package metadata. This repository focuses on iOS 16 compatibility, roothide packaging, consolidated build structure, and maintainable project documentation; it does not claim original authorship of Axon.
 
 ## Features
 
