@@ -135,8 +135,8 @@ void updateViewConfiguration() {
     [[AXNManager sharedInstance] insertNotificationRequest:req];
     [[AXNManager sharedInstance].view refresh];
 
-    if (req.bulletin.sectionID) {
-        NSString *bundleIdentifier = req.bulletin.sectionID;
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
+    if (bundleIdentifier) {
         if ([bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) %orig;
     }
 
@@ -151,13 +151,17 @@ void updateViewConfiguration() {
     if (self.axnAllowChanges) return %orig;     // This condition is true when Axon is updating filtered notifications for display.
 
     NSString *identifier = [[req notificationIdentifier] copy];
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
 
     [[AXNManager sharedInstance] removeNotificationRequest:req];
     [[AXNManager sharedInstance].view refresh];
 
-    if (req.bulletin.sectionID) {
-        NSString *bundleIdentifier = req.bulletin.sectionID;
-        if ([bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) %orig;
+    if (bundleIdentifier && [bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) {
+        %orig;
+    } else {
+        self.axnAllowChanges = YES;
+        %orig;
+        self.axnAllowChanges = NO;
     }
 
     if ([AXNManager sharedInstance].view.showingLatestRequest && identifier &&
@@ -172,12 +176,12 @@ void updateViewConfiguration() {
     if (self.axnAllowChanges) return %orig;     // This condition is true when Axon is updating filtered notifications for display.
 
     NSString *identifier = [[req notificationIdentifier] copy];
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
 
     [[AXNManager sharedInstance] modifyNotificationRequest:req];
     [[AXNManager sharedInstance].view refresh];
 
-    if (req.bulletin.sectionID) {
-        NSString *bundleIdentifier = req.bulletin.sectionID;
+    if (bundleIdentifier) {
         if ([bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) %orig;
     }
 
@@ -203,15 +207,15 @@ void updateViewConfiguration() {
 /* Fix pull to clear all tweaks. */
 
 -(void)_clearAllPriorityListNotificationRequests {
-    [[AXNManager sharedInstance].dispatcher destination:nil requestsClearingNotificationRequests:[self allNotificationRequests]];
+    [[AXNManager sharedInstance] clearAll];
 }
 
 -(void)_clearAllNotificationRequests {
-    [[AXNManager sharedInstance].dispatcher destination:nil requestsClearingNotificationRequests:[self allNotificationRequests]];
+    [[AXNManager sharedInstance] clearAll];
 }
 
 -(void)clearAll {
-    [[AXNManager sharedInstance].dispatcher destination:nil requestsClearingNotificationRequests:[self axnNotificationRequests]];
+    [[AXNManager sharedInstance] clearAll];
 }
 
 /* Compatibility thing for other tweaks. */
@@ -242,10 +246,10 @@ void updateViewConfiguration() {
 %end
 
 // iOS13 Support
-@interface NCNotificationMasterList
+@interface NCNotificationMasterList : NSObject
 @property(retain, nonatomic) NSMutableArray *notificationSections;
 @end
-@interface NCNotificationStructuredSectionList
+@interface NCNotificationStructuredSectionList : NSObject
 @property (nonatomic,readonly) NSArray * allNotificationRequests;
 @end
 @interface NCNotificationStructuredListViewController : UIViewController <clvc>
@@ -267,8 +271,8 @@ void updateViewConfiguration() {
     [[AXNManager sharedInstance] insertNotificationRequest:req];
     [[AXNManager sharedInstance].view refresh];
 
-    if (req.bulletin.sectionID) {
-        NSString *bundleIdentifier = req.bulletin.sectionID;
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
+    if (bundleIdentifier) {
         if ([bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) %orig;
     }
 
@@ -283,13 +287,17 @@ void updateViewConfiguration() {
     if (self.axnAllowChanges) return %orig;     // This condition is true when Axon is updating filtered notifications for display.
 
     NSString *identifier = [[req notificationIdentifier] copy];
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
 
     [[AXNManager sharedInstance] removeNotificationRequest:req];
     [[AXNManager sharedInstance].view refresh];
 
-    if (req.bulletin.sectionID) {
-        NSString *bundleIdentifier = req.bulletin.sectionID;
-        if ([bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) %orig;
+    if (bundleIdentifier && [bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) {
+        %orig;
+    } else {
+        self.axnAllowChanges = YES;
+        %orig;
+        self.axnAllowChanges = NO;
     }
 
     if ([AXNManager sharedInstance].view.showingLatestRequest && identifier &&
@@ -304,12 +312,12 @@ void updateViewConfiguration() {
     if (self.axnAllowChanges) return %orig;     // This condition is true when Axon is updating filtered notifications for display.
 
     NSString *identifier = [[req notificationIdentifier] copy];
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
 
     [[AXNManager sharedInstance] modifyNotificationRequest:req];
     [[AXNManager sharedInstance].view refresh];
 
-    if (req.bulletin.sectionID) {
-        NSString *bundleIdentifier = req.bulletin.sectionID;
+    if (bundleIdentifier) {
         if ([bundleIdentifier isEqualToString:[AXNManager sharedInstance].view.selectedBundleIdentifier]) %orig;
     }
 
@@ -327,6 +335,18 @@ void updateViewConfiguration() {
     [[AXNManager sharedInstance].view refresh];
 }
 
+-(void)_clearAllPriorityListNotificationRequests {
+    [[AXNManager sharedInstance] clearAll];
+}
+
+-(void)_clearAllNotificationRequests {
+    [[AXNManager sharedInstance] clearAll];
+}
+
+-(void)clearAll {
+    [[AXNManager sharedInstance] clearAll];
+}
+
 %new
 -(id)axnNotificationRequests {
     NSMutableOrderedSet *allRequests = [NSMutableOrderedSet new];
@@ -338,12 +358,21 @@ void updateViewConfiguration() {
 
 %new
 -(NSSet *)allNotificationRequests {
-  NSArray *array = [NSMutableArray new];
-  NCNotificationMasterList *masterList = [self masterList];
-  for(NCNotificationStructuredSectionList *item in [masterList notificationSections]) {
-    array = [array arrayByAddingObjectsFromArray:[item allNotificationRequests]];
+  NSMutableSet *set = [NSMutableSet new];
+  NCNotificationMasterList *masterList = [self respondsToSelector:@selector(masterList)] ? [self masterList] : nil;
+  if (masterList && [masterList respondsToSelector:@selector(notificationSections)]) {
+    for (id item in [masterList notificationSections]) {
+      if ([item respondsToSelector:@selector(allNotificationRequests)]) {
+        NSArray *reqs = [item allNotificationRequests];
+        if (reqs) [set addObjectsFromArray:reqs];
+      }
+    }
   }
-  return [[NSSet alloc] initWithArray:array];
+  for (NSString *key in [[AXNManager sharedInstance].notificationRequests allKeys]) {
+    NSArray *reqs = [[AXNManager sharedInstance] requestsForBundleIdentifier:key];
+    if (reqs) [set addObjectsFromArray:reqs];
+  }
+  return set;
 }
 
 %new

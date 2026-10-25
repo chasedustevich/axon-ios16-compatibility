@@ -1,12 +1,12 @@
-# Axon iOS 16 Compatibility Fork
+# Axon iOS 16 Compatibility Fork (Rootless)
 
-Axon is a Theos-based iOS tweak that provides Priority Hub-style grouped notifications for jailbroken iOS 16 devices. It reorganizes Lock Screen and Notification Center notifications by application, adds icon-based filtering, and exposes preference controls for layout, style, badges, haptics, sorting, and display behavior.
+Axon is a Theos-based iOS tweak that provides Priority Hub-style grouped notifications for jailbroken iOS 15-16+ devices. It reorganizes Lock Screen and Notification Center notifications by application, adds icon-based filtering, and exposes preference controls for layout, style, badges, haptics, sorting, and display behavior.
 
-This archived compatibility fork targets a roothide-style package build and keeps the tweak logic and preference bundle together in one Theos project.
+This fork targets modern rootless jailbreaks (Dopamine, Palera1n) using `THEOS_PACKAGE_SCHEME = rootless` and `iphoneos-arm64`, and fixes notification clearing issues where notifications would get stuck over time.
 
 ## Scope and Attribution
 
-The original Axon package is credited to Nepeta and Baw Appie in the preserved package metadata. This repository focuses on iOS 16 compatibility, roothide packaging, consolidated build structure, and maintainable project documentation; it does not claim original authorship of Axon.
+The original Axon package is credited to Nepeta and Baw Appie in the preserved package metadata. This repository focuses on iOS 16 compatibility, modern rootless packaging, notification clearing fixes, and maintainable project documentation; it does not claim original authorship of Axon.
 
 ## Features
 
@@ -14,22 +14,22 @@ The original Axon package is credited to Nepeta and Baw Appie in the preserved p
 - Supports horizontal and vertical layouts.
 - App icons can show badge counts and optional backgrounds.
 - Preference bundle for enabling the tweak, changing styles, alignment, icon behavior, sorting, spacing, haptics, and default visibility.
-- Compatibility hooks for common lock-screen notification flows, including clearing and notification-history behavior.
-- Builds a tweak bundle plus an `AxonPrefs` preference bundle.
+- Robust notification removal & clear-all handling that properly synchronizes with SpringBoard and clears notification stores without needing resprings.
+- Builds a tweak bundle plus an `AxonPrefs` preference bundle for rootless environments (`/var/jb`).
 
 ## Requirements
 
-- Jailbroken iOS 16 device using a compatible roothide environment.
+- Jailbroken iOS 15-16+ device using a rootless jailbreak (Dopamine, Palera1n).
 - Theos installed and configured.
-- MobileSubstrate-compatible injection environment.
+- MobileSubstrate / ElleKit compatible injection environment.
 - Xcode command-line tools or an equivalent iOS toolchain.
 
 The package metadata is in `control` and declares:
 
 - Package id: `me.nepeta.axon`
 - Package name: `Axon`
-- Firmware dependency: `>= 16.0`
-- Architecture: `iphoneos-arm`
+- Firmware dependency: `>= 15.0`
+- Architecture: `iphoneos-arm64`
 
 ## Repository Layout
 
@@ -53,7 +53,9 @@ make clean package
 The top-level `Makefile` sets:
 
 ```make
-THEOS_PACKAGE_SCHEME = roothide
+export TARGET = iphone:clang:latest:15.0
+export ARCHS = arm64 arm64e
+export THEOS_PACKAGE_SCHEME = rootless
 FINALPACKAGE = 1
 DEBUG = 0
 ```

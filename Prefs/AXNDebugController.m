@@ -1,4 +1,3 @@
-#import <AppList/AppList.h>
 #import "AXNController.h"
 
 @interface AXNDebugController : PSListController

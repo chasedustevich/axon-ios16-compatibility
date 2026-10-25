@@ -36,13 +36,22 @@
 }
 
 -(void)getRidOfWaste {
-  for (NSString *bundleIdentifier in [self.notificationRequests allKeys]) {
-    __weak NSMutableArray *requests = self.notificationRequests[bundleIdentifier];
-    for (int i = [requests count] - 1; i >= 0; i--) {
-      __weak AXNRequestWrapper *wrapped = requests[i];
-      if (!wrapped || ![wrapped request]) [requests removeObjectAtIndex:i];
+    for (NSString *bundleIdentifier in [self.notificationRequests allKeys]) {
+        NSMutableArray *requests = self.notificationRequests[bundleIdentifier];
+        if (!requests || ![requests isKindOfClass:[NSMutableArray class]]) continue;
+        for (NSInteger i = (NSInteger)[requests count] - 1; i >= 0; i--) {
+            AXNRequestWrapper *wrapped = requests[i];
+            if (!wrapped || ![wrapped isKindOfClass:[AXNRequestWrapper class]] || ![wrapped request]) {
+                [requests removeObjectAtIndex:i];
+            }
+        }
+        if ([requests count] == 0) {
+            [self.notificationRequests removeObjectForKey:bundleIdentifier];
+            [self.countCache removeObjectForKey:bundleIdentifier];
+            [self.timestamps removeObjectForKey:bundleIdentifier];
+            [self.names removeObjectForKey:bundleIdentifier];
+        }
     }
-  }
 }
 
 -(void)invalidateCountCache {
@@ -144,22 +153,68 @@
 }
 
 -(void)clearAll:(NSString *)bundleIdentifier {
-    if (self.notificationRequests[bundleIdentifier]) {
-        [self.dispatcher destination:nil requestsClearingNotificationRequests:[self allRequestsForBundleIdentifier:bundleIdentifier]];
+    if (!bundleIdentifier) return;
+    NSArray *requestsToClear = [self allRequestsForBundleIdentifier:bundleIdentifier];
+    if ([requestsToClear count] > 0) {
+        if (self.dispatcher) {
+            [self.dispatcher destination:nil requestsClearingNotificationRequests:requestsToClear];
+        }
+        self.clvc.axnAllowChanges = YES;
+        for (NCNotificationRequest *req in requestsToClear) {
+            if ([self.clvc respondsToSelector:@selector(removeNotificationRequest:forCoalescedNotification:)]) {
+                [self.clvc removeNotificationRequest:req forCoalescedNotification:[self coalescedNotificationForRequest:req]];
+            } else if ([self.clvc respondsToSelector:@selector(removeNotificationRequest:)]) {
+                [self.clvc removeNotificationRequest:req];
+            }
+        }
+        self.clvc.axnAllowChanges = NO;
     }
-    self.notificationRequests[bundleIdentifier] = nil;
+
+    [self.notificationRequests removeObjectForKey:bundleIdentifier];
+    [self.countCache removeObjectForKey:bundleIdentifier];
+    [self.timestamps removeObjectForKey:bundleIdentifier];
+    [self.names removeObjectForKey:bundleIdentifier];
+
+    if ([self.view.selectedBundleIdentifier isEqualToString:bundleIdentifier]) {
+        [self.view reset];
+    }
+    [self.view refresh];
 }
 
 -(void)clearAll {
-  for(NSString *item in [self.notificationRequests allKeys]) {
-    [self.dispatcher destination:nil requestsClearingNotificationRequests:[self allRequestsForBundleIdentifier:item]];
-  }
-  self.notificationRequests = [@{} mutableCopy];
+    NSMutableOrderedSet *allRequests = [NSMutableOrderedSet new];
+    for (NSString *key in [self.notificationRequests allKeys]) {
+        [allRequests addObjectsFromArray:[self allRequestsForBundleIdentifier:key]];
+    }
+
+    if ([allRequests count] > 0) {
+        if (self.dispatcher) {
+            [self.dispatcher destination:nil requestsClearingNotificationRequests:allRequests];
+        }
+        self.clvc.axnAllowChanges = YES;
+        for (NCNotificationRequest *req in allRequests) {
+            if ([self.clvc respondsToSelector:@selector(removeNotificationRequest:forCoalescedNotification:)]) {
+                [self.clvc removeNotificationRequest:req forCoalescedNotification:[self coalescedNotificationForRequest:req]];
+            } else if ([self.clvc respondsToSelector:@selector(removeNotificationRequest:)]) {
+                [self.clvc removeNotificationRequest:req];
+            }
+        }
+        self.clvc.axnAllowChanges = NO;
+    }
+
+    [self.notificationRequests removeAllObjects];
+    [self.countCache removeAllObjects];
+    [self.timestamps removeAllObjects];
+    [self.names removeAllObjects];
+
+    [self.view reset];
+    [self.view refresh];
 }
 
 -(void)insertNotificationRequest:(NCNotificationRequest *)req {
-    if (!req || ![req notificationIdentifier] || !req.bulletin || !req.bulletin.sectionID) return;
-    NSString *bundleIdentifier = req.bulletin.sectionID;
+    if (!req || ![req notificationIdentifier]) return;
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
+    if (!bundleIdentifier || bundleIdentifier.length == 0) return;
 
     if (req.content && req.content.header) {
         self.names[bundleIdentifier] = [req.content.header copy];
@@ -179,7 +234,7 @@
     if (self.notificationRequests[bundleIdentifier]) {
         BOOL found = NO;
         for (int i = 0; i < [self.notificationRequests[bundleIdentifier] count]; i++) {
-            __weak AXNRequestWrapper *wrapped = self.notificationRequests[bundleIdentifier][i];
+            AXNRequestWrapper *wrapped = self.notificationRequests[bundleIdentifier][i];
             if (wrapped && [[req notificationIdentifier] isEqualToString:[wrapped notificationIdentifier]]) {
                 found = YES;
                 break;
@@ -196,35 +251,53 @@
 }
 
 -(void)removeNotificationRequest:(NCNotificationRequest *)req {
-    if (!req || ![req notificationIdentifier] || !req.bulletin || !req.bulletin.sectionID) return;
-    NSString *bundleIdentifier = req.bulletin.sectionID;
+    if (!req || ![req notificationIdentifier]) return;
+    NSString *reqId = [req notificationIdentifier];
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
 
-    if (self.latestRequest && [[self.latestRequest notificationIdentifier] isEqualToString:[req notificationIdentifier]]) {
+    if (self.latestRequest && [[self.latestRequest notificationIdentifier] isEqualToString:reqId]) {
         self.latestRequest = nil;
     }
 
     [self getRidOfWaste];
 
-    BOOL latestRequestVerified = true;
-    if(self.view.showByDefault == 1) latestRequestVerified = false;
-    if (self.notificationRequests[bundleIdentifier]) {
-        __weak NSMutableArray *requests = self.notificationRequests[bundleIdentifier];
-        for (int i = [requests count] - 1; i >= 0; i--) {
-            __weak AXNRequestWrapper *wrapped = requests[i];
-            if (wrapped && [[req notificationIdentifier] isEqualToString:[wrapped notificationIdentifier]]) {
+    BOOL latestRequestVerified = (self.view.showByDefault != 1);
+
+    NSMutableArray *bundlesToCheck = [NSMutableArray new];
+    if (bundleIdentifier) [bundlesToCheck addObject:bundleIdentifier];
+    for (NSString *key in [self.notificationRequests allKeys]) {
+        if (![bundlesToCheck containsObject:key]) [bundlesToCheck addObject:key];
+    }
+
+    for (NSString *bundle in bundlesToCheck) {
+        NSMutableArray *requests = self.notificationRequests[bundle];
+        if (!requests) continue;
+        for (NSInteger i = (NSInteger)[requests count] - 1; i >= 0; i--) {
+            AXNRequestWrapper *wrapped = requests[i];
+            if (wrapped && [reqId isEqualToString:[wrapped notificationIdentifier]]) {
                 [requests removeObjectAtIndex:i];
-                if(!latestRequestVerified && [[wrapped notificationIdentifier] isEqualToString:[self.latestRequest notificationIdentifier]]) latestRequestVerified = true;
+                if (!latestRequestVerified && [[wrapped notificationIdentifier] isEqualToString:[self.latestRequest notificationIdentifier]]) {
+                    latestRequestVerified = true;
+                }
             }
         }
+        if ([requests count] == 0) {
+            [self.notificationRequests removeObjectForKey:bundle];
+            [self.countCache removeObjectForKey:bundle];
+            [self.timestamps removeObjectForKey:bundle];
+            [self.names removeObjectForKey:bundle];
+        } else {
+            [self updateCountForBundleIdentifier:bundle];
+        }
     }
-    if(!latestRequestVerified) self.latestRequest = nil;
 
-    [self updateCountForBundleIdentifier:bundleIdentifier];
+    if (!latestRequestVerified) self.latestRequest = nil;
 }
 
 -(void)modifyNotificationRequest:(NCNotificationRequest *)req {
-    if (!req || ![req notificationIdentifier] || !req.bulletin || !req.bulletin.sectionID) return;
-    NSString *bundleIdentifier = req.bulletin.sectionID;
+    if (!req || ![req notificationIdentifier]) return;
+    NSString *bundleIdentifier = req.sectionIdentifier ?: req.bulletin.sectionID;
+    if (!bundleIdentifier || bundleIdentifier.length == 0) return;
 
     if (self.latestRequest && [[self.latestRequest notificationIdentifier] isEqualToString:[req notificationIdentifier]]) {
         self.latestRequest = req;
@@ -232,9 +305,9 @@
 
     [self getRidOfWaste];
     if (self.notificationRequests[bundleIdentifier]) {
-        __weak NSMutableArray *requests = self.notificationRequests[bundleIdentifier];
-        for (int i = [requests count] - 1; i >= 0; i--) {
-            __weak AXNRequestWrapper *wrapped = requests[i];
+        NSMutableArray *requests = self.notificationRequests[bundleIdentifier];
+        for (NSInteger i = (NSInteger)[requests count] - 1; i >= 0; i--) {
+            AXNRequestWrapper *wrapped = requests[i];
             if (wrapped && [wrapped notificationIdentifier] && [[req notificationIdentifier] isEqualToString:[wrapped notificationIdentifier]]) {
                 [requests removeObjectAtIndex:i];
                 [requests insertObject:[AXNRequestWrapper wrapRequest:req] atIndex:i];
@@ -259,7 +332,7 @@
     [self getRidOfWaste];
 
     for (int i = 0; i < [self.notificationRequests[bundleIdentifier] count]; i++) {
-        __weak AXNRequestWrapper *wrapped = self.notificationRequests[bundleIdentifier][i];
+        AXNRequestWrapper *wrapped = self.notificationRequests[bundleIdentifier][i];
         if (wrapped && [wrapped request]) [array addObject:[wrapped request]];
     }
 
@@ -333,11 +406,9 @@
 -(void)hideNotificationRequest:(NCNotificationRequest *)req {
     if (!req) return;
     self.clvc.axnAllowChanges = YES;
-    [self insertNotificationRequest:req];
     if ([self.clvc respondsToSelector:@selector(removeNotificationRequest:forCoalescedNotification:)]) [self.clvc removeNotificationRequest:req forCoalescedNotification:[self coalescedNotificationForRequest:req]];
     else [self.clvc removeNotificationRequest:req];
     self.clvc.axnAllowChanges = NO;
-
 }
 
 -(void)showNotificationRequests:(id)reqs {

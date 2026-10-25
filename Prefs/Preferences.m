@@ -1,7 +1,7 @@
 #import "Preferences.h"
 #include <unistd.h>
 #include <spawn.h>
-#include <roothide.h>
+#include <rootless.h>
 #include <Foundation/Foundation.h>
 
 @implementation AXNPrefsListController
@@ -25,8 +25,8 @@
         
         self.iconView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,10,10)];
         self.iconView.contentMode = UIViewContentModeScaleAspectFit;
-        const char *iconPathC = jbroot("/Library/PreferenceBundles/AxonPrefs.bundle/icon@2x.png");
-        NSString *iconPath = [NSString stringWithUTF8String:iconPathC];
+        NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+        NSString *iconPath = [bundle pathForResource:@"icon@2x" ofType:@"png"] ?: ROOT_PATH_NS(@"/Library/PreferenceBundles/AxonPrefs.bundle/icon@2x.png");
         self.iconView.image = [UIImage imageWithContentsOfFile:iconPath];
         self.iconView.translatesAutoresizingMaskIntoConstraints = NO;
         self.iconView.alpha = 0.0;
@@ -60,8 +60,8 @@
     self.headerView = [[UIView alloc] initWithFrame:CGRectMake(0,0,200,200)];
     self.headerImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,200,200)];
     self.headerImageView.contentMode = UIViewContentModeScaleAspectFill;
-    const char *bannerPathC = jbroot("/Library/PreferenceBundles/AxonPrefs.bundle/axon.png");
-    NSString *bannerPath = [NSString stringWithUTF8String:bannerPathC];
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *bannerPath = [bundle pathForResource:@"axon" ofType:@"png"] ?: ROOT_PATH_NS(@"/Library/PreferenceBundles/AxonPrefs.bundle/axon.png");
     self.headerImageView.image = [UIImage imageWithContentsOfFile:bannerPath];
     self.headerImageView.translatesAutoresizingMaskIntoConstraints = NO;
     
@@ -109,8 +109,8 @@
 
 -(void)respring {
     pid_t pid;
-    char* args[] = {"/usr/bin/killall", "backboardd", NULL};
-    posix_spawn(&pid, jbroot(args[0]), NULL, NULL, args, NULL);
+    char *args[] = {"/usr/bin/killall", "backboardd", NULL};
+    posix_spawn(&pid, ROOT_PATH(args[0]), NULL, NULL, (char *const *)args, NULL);
 }
 
 @end
