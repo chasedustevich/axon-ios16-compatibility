@@ -37,6 +37,8 @@ void updateViewConfiguration() {
         [AXNManager sharedInstance].view.spacing = spacing;
         [AXNManager sharedInstance].view.alignment = alignment;
         [AXNManager sharedInstance].view.iconStyle = iconStyle;
+        [[AXNManager sharedInstance].view.collectionView.collectionViewLayout invalidateLayout];
+        [[AXNManager sharedInstance].view setNeedsLayout];
     }
 }
 
@@ -752,7 +754,7 @@ void loadPrefs() {
   addBlur = prefs[@"addBlur"] != nil ? [prefs[@"addBlur"] boolValue] : false;
   style = [prefs[@"Style"] intValue] ?: 0;
   showByDefault = [prefs[@"ShowByDefault"] intValue] ?: 0;
-  alignment = [prefs[@"Alignment"] intValue] ?: 0;
+  alignment = prefs[@"Alignment"] != nil ? [prefs[@"Alignment"] intValue] : 1;
   iconStyle = [prefs[@"iconStyle"] intValue] ?: 0;
   verticalPosition = [prefs[@"VerticalPosition"] intValue] ?: 0;
   spacing = [prefs[@"Spacing"] floatValue] ?: 10;
