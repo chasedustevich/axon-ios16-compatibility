@@ -45,6 +45,11 @@ Axon is an **iOS jailbreak tweak** built with **Theos**, originally created by N
    - Switched from legacy `roothide` to standard Theos rootless (`THEOS_PACKAGE_SCHEME = rootless`, `iphoneos-arm64`).
    - Replaced `<roothide.h>` and `jbroot` with `<rootless.h>`, `ROOT_PATH`, `ROOT_PATH_NS`, and bundle-relative asset loading.
 
+4. **Alignment Fix:**
+   - Fixed `-viewDidLayoutSubviews` erroneously declared on `UIView` (`AXNView`) instead of `-layoutSubviews`, which caused `UICollectionViewFlowLayout` insets to never recalculate after AutoLayout expanded the view from its initial 64pt width.
+   - Replaced broken `semanticContentAttribute` RTL toggles with direct, dynamic calculation of section insets for Left (0), Center (1), and Right (2) alignments.
+   - Updated default preference fallback in `Tweak.xm` to 1 (Center) matching `Prefs.plist`.
+
 ## Build / install
 
 Requires [Theos](https://theos.dev/) with `$THEOS` set and an iOS 15+ SDK.
