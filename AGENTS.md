@@ -2,7 +2,7 @@
 
 Axon is an **iOS jailbreak tweak** built with **Theos**, originally created by Nepeta and maintained by Baw Appie, modernized for **iOS 15–16+ rootless jailbreaks (Dopamine, Palera1n)** by Chase Dustevich. It brings Priority Hub-style grouped notifications by application to the Lock Screen and Notification Center (`NCNotificationStructuredListViewController` / `NCNotificationCombinedListViewController`). It also includes a **Settings (PreferenceLoader) bundle** for live configuration.
 
-- Package ID: `me.nepeta.axon` (see `control`, version `1.5.1`).
+- Package ID: `me.nepeta.axon` (see `control`, version `1.6.0`).
 - Scheme: **rootless only** (`THEOS_PACKAGE_SCHEME = rootless`, `iphoneos-arm64`, installs under `/var/jb`).
 - Depends on: `mobilesubstrate`, `preferenceloader`, `firmware (>= 15.0)`
 - Primary test environment: Dopamine, iOS 16.5
@@ -20,7 +20,7 @@ Axon is an **iOS jailbreak tweak** built with **Theos**, originally created by N
 | `Tweak/AXNRequestWrapper.h/.m` | Model wrapper around `NCNotificationRequest`. |
 | `Prefs/` | PreferenceLoader bundle `AxonPrefs` (`AXNPrefsListController`, Location, Debug options). |
 | `Prefs/Resources/Prefs.plist` | Specifiers for Axon configuration (styles, alignment, badges, sorting, vertical layout). |
-| `control` | Debian package control metadata (`iphoneos-arm64`, version 1.5.1). |
+| `control` | Debian package control metadata (`iphoneos-arm64`, version 1.6.0). |
 | `Makefile` | Root aggregate Theos makefile targeting iOS 15.0+ rootless. |
 | `README.md` | User documentation and build instructions. |
 

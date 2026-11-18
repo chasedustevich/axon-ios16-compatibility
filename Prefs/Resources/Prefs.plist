@@ -426,8 +426,10 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>footerAlignment</key>
+			<integer>1</integer>
 			<key>footerText</key>
-			<string>Axon by Nepeta and BawAppie, KritantaDev</string>
+			<string>Axon (Rootless) v1.6.0&#xA;Updated for rootless by Chase Dustevich&#xA;Originally by Nepeta &amp; Baw Appie</string>
 			<key>isStaticText</key>
 			<true/>
 		</dict>
