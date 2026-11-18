@@ -10,7 +10,7 @@
 
 Axon is a lightweight, elegant iOS jailbreak tweak built with Theos that brings **Priority Hub-style grouped notifications** to the Lock Screen and Notification Center. It reorganizes notifications by application icon, adds fast tap-to-filter management, and provides extensive preference customization for layout, style, badge count, haptics, sorting, and display behavior.
 
-Originally created by **Nepeta** and maintained by **Baw Appie**. Updated and modernized for **modern rootless jailbreaks (iOS 15–16+, Dopamine, Palera1n)** by **Chase Dustevich** (version 1.6.0).
+Originally created by **Nepeta** and maintained by **Baw Appie**. Updated and modernized for **modern rootless jailbreaks (iOS 15–16+, Dopamine, Palera1n)** by **Chase Dustevich** (version 1.6.0) with assistance from **Antigravity** (Google DeepMind).
 
 ---
 
@@ -124,7 +124,7 @@ Key preference controls available in Settings > Axon:
 
 ## 📜 Scope & Attribution
 
-The original Axon was created by **Nepeta** and maintained by **Baw Appie**. This repository provides the **v1.6.0 rootless update**, authored by **Chase Dustevich**, modernizing the tweak for iOS 15–16+ rootless environments and fixing persistent notification-clearing and alignment issues.
+The original Axon was created by **Nepeta** and maintained by **Baw Appie**. This repository provides the **v1.6.0 rootless update**, authored by **Chase Dustevich** with assistance from **Antigravity** (Google DeepMind), modernizing the tweak for iOS 15–16+ rootless environments and fixing persistent notification-clearing and alignment issues.
 
 ## 📄 License
 
